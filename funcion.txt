@@ -1,0 +1,81 @@
+const productos = JSON.parse(localStorage.getItem("Items"));
+          const datos = JSON.parse(localStorage.getItem("Datos"));
+          const localidad = "La Plata";
+          const cp = 1900;
+
+          let costo = 0;
+
+          const obtener = productos.map((item) => {
+            const cantidad = item.cantidad;
+            const alto = item.alto;
+            const ancho = item.ancho;
+            const largo = item.largo;
+            const peso = item.peso;
+            const precio = item.precio;
+            // const response = await getEnvio(
+            //   localidad,
+            //   cp,
+            //   precio,
+            //   alto,
+            //   ancho,
+            //   peso,
+            //   largo
+            // );
+
+            fetch(
+              `${HOST}/NuevaCotXMed?idcliente=${IDCLIENTE}&ulogin=${ULOGIN}&uclave=${UCLAVE}&ancho=${ancho}&largo=${largo}&alto=${alto}&peso=${peso}&codigopostal=${cp}&localidad=${localidad}&valor=${precio}&contrareembolso`
+            )
+              .then((result) => result.json())
+              .then((data) => {
+                const costoTotal =
+                  parseInt(data.Cotizaciones[1].Valor) * cantidad;
+
+                  verCosto(costoTotal);
+
+              })
+                  
+          });
+
+            // console.log(obtener[0]);
+
+
+            //Obtener CostoEnvio
+    // const verO = async () => {
+    //   let x = await Promise.all(
+    //     productos().map(async (item) => {
+    //       var cantidad = item.cantidad;
+    //       var alto = item.alto;
+    //       var ancho = item.ancho;
+    //       var largo = item.largo;
+    //       var peso = item.peso;
+    //       var precio = item.precio;
+    //       var localidad = "La Plata";
+    //       var cp = 1900;
+
+    //       // const response = await getEnvio(localidad, cp, costo, alto, ancho, peso, largo);
+    //       const response = await fetch(
+    //         `${HOST}/NuevaCotXMed?idcliente=${IDCLIENTE}&ulogin=${ULOGIN}&uclave=${UCLAVE}&ancho=${ancho}&largo=${largo}&alto=${alto}&peso=${peso}&codigopostal=${cp}&localidad=${localidad}&valor=${precio}&contrareembolso`
+    //       )
+    //         .then((result) => result.json())
+    //         .then((data) => {
+    //           const costoTotal =
+    //             parseInt(data.Cotizaciones[1].Valor) * cantidad;
+
+    //           return costoTotal;
+    //         });
+
+    //       return response;
+    //     })
+    //   ).then((result) => {
+    //     var c = result.filter((item) => item >= 100);
+    //     var a = c;
+
+    //     a.push(234);
+
+    //     return a[0];
+    //   });
+
+    //   return x;
+    // };
+
+    // verO().then((result => console.log(result)));
