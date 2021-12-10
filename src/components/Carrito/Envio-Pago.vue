@@ -93,13 +93,12 @@
         </div>
       </div>
     </div>
-    
   </div>
 </template>
 
 <script>
 import { watchEffect, onMounted, ref } from "vue";
-import { getEnvio } from "../../api/envios";
+import useEnvio from '../../composables/useEnvio'
 
 export default {
   name: "Envio-pago",
@@ -120,41 +119,10 @@ export default {
       return total;
     };
 
-    const obtenerCosto = async () => {
-      try {
-       const obtener = await productos().map(async (item) => {
-          var cantidad = item.cantidad;
-          var alto = item.alto;
-          var ancho = item.ancho;
-          var largo = item.largo;
-          var peso = item.peso;
-          var precio = item.precio;
-          var localidad = "La Plata";
-          var cp = 1900;
 
-          const {Cotizaciones} = await getEnvio(
-            localidad,
-            cp,
-            precio,
-            alto,
-            ancho,
-            peso,
-            largo
-          );
+    const {costoEnvioDomicilio, costoEnvioSucursal} = useEnvio()
 
-          //  console.log(response);
-          const valor = Cotizaciones[1].Valor * cantidad;
-          return valor;
-        });
 
-        return obtener;
-
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-  console.log(obtenerCosto());
 
     //Ver COSTO DE ENVIO
     const costoEnvio = () => {
@@ -166,9 +134,9 @@ export default {
         }
       } else if (formEnvio.value.transporte === "Cruz del Sur") {
         if (formEnvio.value.entrega === "domicilio") {
-          var costo = 300;
+          var costo = parseInt(costoEnvioDomicilio.value) + 1;
         } else {
-          var costo = 150;
+          var costo = parseInt(costoEnvioSucursal.value) + 1;
         }
       } else {
         var costo = 0;
@@ -193,7 +161,7 @@ export default {
       costoEnvio,
       formEnvio,
       total,
-      obtenerCosto,
+      // obtenerCosto,
     };
   },
 };
