@@ -71,13 +71,13 @@
               <li class="lista">
                 <p class="p-2">
                   <i class="fas fa-truck"></i> Envío
-                  <span class="float-right">${{ costoEnvio() }} </span>
+                  <span class="float-right">${{ Intl.NumberFormat("de-DE").format(costoEnvio()) }} </span>
                 </p>
               </li>
-              <li class="lista">
+              <li class="lista" v-if="metodo == 'transferencia'">
                 <p class="p-2">
                   <i class="fas fa-percent"></i> Descuento
-                  <span class="float-right">$0</span>
+                  <span class="float-right">-${{ Intl.NumberFormat("de-DE").format(descuento()) }}</span>
                 </p>
               </li>
               <li class="lista border-top border-bottom">
@@ -93,17 +93,69 @@
         </div>
       </div>
     </div>
+    <div class="col-md-5 mx-auto p-3">
+      <div class="card borde">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-12">
+              <h3>Metódo de pago:</h3>
+              <div class="form-group">
+                <input type="radio" value="ahora12" v-model="metodo" />
+                <span>
+                  Ahora 12
+                  <img src="/img/ahora-12.jpg" class="medidas" alt="ahora-12" />
+                </span>
+              </div>
+              <div class="form-group">
+                <input type="radio" value="value18" v-model="metodo" />
+                <span>
+                  Ahora 18
+                  <img src="/img/ahora-18.png" class="medidas" alt="ahora-18" />
+                </span>
+              </div>
+              <div class="form-group">
+                <input type="radio" value="transferencia" v-model="metodo" />
+                <span> Transferencia (20% descuento)</span>
+              </div>
+              <div class="form-group">
+                <input type="radio" value="mercado_pago" v-model="metodo" />
+                <span>
+                  Mercado Pago
+                  <img
+                    src="/img/mercado.png"
+                    class="medidas"
+                    alt="mercado pago"
+                  />
+                </span>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <div class="form-group" v-if="metodo == 'transferencia'">
+                <button class="btn btn-dark btn-block" @click="transf()">
+                  Realizar transferencia
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { watchEffect, onMounted, ref } from "vue";
-import useEnvio from '../../composables/useEnvio'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useToast } from "vue-toastification";
+import useEnvio from "../../composables/useEnvio";
 
 export default {
   name: "Envio-pago",
   setup() {
     const formEnvio = ref({});
+    const metodo = ref();
+    const router = useRouter();
+     const toast = useToast();
 
     //OBTENER PRODUCTOS
     const productos = () => {
@@ -114,15 +166,13 @@ export default {
 
     //OBTENER SUBTOTAL
     const subTotal = () => {
-      var total = localStorage.getItem("Total");
+      var total = localStorage.getItem("Subtotal");
 
       return total;
     };
 
-
-    const {costoEnvioDomicilio, costoEnvioSucursal} = useEnvio()
-
-
+    //OBTENER ENVIO CRUZ DEL SUR
+    const { costoEnvioDomicilio, costoEnvioSucursal } = useEnvio();
 
     //Ver COSTO DE ENVIO
     const costoEnvio = () => {
@@ -135,8 +185,10 @@ export default {
       } else if (formEnvio.value.transporte === "Cruz del Sur") {
         if (formEnvio.value.entrega === "domicilio") {
           var costo = parseInt(costoEnvioDomicilio.value) + 1;
-        } else {
+        } else if (formEnvio.value.entrega === "sucursal") {
           var costo = parseInt(costoEnvioSucursal.value) + 1;
+        } else {
+          var costo = 0;
         }
       } else {
         var costo = 0;
@@ -145,14 +197,67 @@ export default {
       return costo;
     };
 
+
+    //Datos del transporte
+    const transporte = () => {
+     
+      const datosTransporte = {
+        transporte: formEnvio.value.transporte,
+        tipo_envio: formEnvio.value.entrega,
+        costo: costoEnvio()
+      }
+
+      return datosTransporte;
+    }
+
+    //Descuento 
+     const descuento = () => {
+       const sumaTotal = parseInt(subTotal()) + costoEnvio()
+       const desc = parseInt((sumaTotal * 20) / 100)
+
+       return desc
+     }
+
     //OBTENER TOTAL
     const total = () => {
-      var total = localStorage.getItem("Total");
-      var costo = costoEnvio();
 
-      var precio = Number(total) + Number(costo);
+      var total = localStorage.getItem("Subtotal");
+      var costo = costoEnvio();
+      var desc = descuento()
+
+      if(metodo.value == 'transferencia'){
+
+        var precio = (Number(total) + Number(costo)) - desc
+
+      }else{
+        
+        var precio = Number(total) + Number(costo);
+      }
 
       return precio;
+    };
+
+    //Numero operacion
+    const operacion = () => {
+      const numero_aleatorio = Math.floor(Math.random() * 99999 + 1);
+
+      return numero_aleatorio;
+    };
+
+    //Transferencia
+    const transf = () => {
+      if (!formEnvio.value.entrega) {
+          toast.warning("¡Elige un tipo de envio!", {
+            timeout: 3000,
+            position: "top-center",
+          });
+      } else {
+        localStorage.setItem('Total', total())
+        localStorage.setItem('Envio', JSON.stringify(transporte()))
+         localStorage.setItem('Operacion', operacion())
+
+        router.push("/finalizar-transferencia");
+      }
     };
 
     return {
@@ -161,7 +266,9 @@ export default {
       costoEnvio,
       formEnvio,
       total,
-      // obtenerCosto,
+      metodo,
+      transf,
+      descuento
     };
   },
 };
@@ -198,5 +305,10 @@ select.error {
 
 .borde {
   border-top: 3px solid #000;
+}
+
+.medidas {
+  width: 55px !important;
+  height: 35px !important;
 }
 </style>

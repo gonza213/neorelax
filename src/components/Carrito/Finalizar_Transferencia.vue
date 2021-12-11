@@ -5,9 +5,7 @@
         <div class="col-md-12">
           <div class="card">
             <div class="card-header">
-              <h3 class="text-primary">
-                N° de operación: #{{ obtenerDatos().operacion }}
-              </h3>
+              <h3 class="text-primary">N° de operación: #{{ operacion() }}</h3>
             </div>
             <div class="card-body">
               <div class="row">
@@ -15,28 +13,29 @@
                   <div class="card w-100 h-100  border-top border-info">
                     <div class="card-body">
                       <p>
-                        <span class="text-info">Datos del cliente:</span>
+                        <span class="text-info"
+                          >Datos del cliente: <i class="fas fa-user"></i
+                        ></span>
                         <br />
-                        Cliente: {{ obtenerDatos().cliente.nombre }}
-                        {{ obtenerDatos().cliente.apellido }} <br />
-                        DNI: {{ obtenerDatos().cliente.dni }} <br />
-                        Ciudad: {{ obtenerDatos().cliente.ciudad }} <br />
-                        Provincia: {{ obtenerDatos().cliente.provincia }}
+                        Nombre y Apellido: {{ datos().nombre }}
+                        {{ datos().apellidos }} <br />
+                        DNI: {{ datos().dni }} <br />
                       </p>
                       <p>
-                        <span class="text-info">Datos del Envio:</span>
+                        <span class="text-info"
+                          >Datos del Envio: <i class="fas fa-truck"></i>
+                        </span>
                         <br />
-                        Transporte: {{ obtenerDatos().envio.transporte }}
+                        Transporte: {{ envio().transporte }}
                         <br />
-                        <span v-if="obtenerDatos().envio.tipo_envio == 'E'"
-                          >Entrega a domicilio</span
-                        >
-                        <span v-else>Entrega en Sucursal</span> <br />
+                        Entrega:
+                        <span class="text-capitalize">{{
+                          envio().tipo_envio
+                        }}</span>
+                        <br />
                         <span
                           >Costo: ${{
-                            Intl.NumberFormat("de-DE").format(
-                              obtenerDatos().envio.costo
-                            )
+                            Intl.NumberFormat("de-DE").format(envio().costo)
                           }}</span
                         >
                       </p>
@@ -46,16 +45,17 @@
                 <div class="col-md-6 p-2">
                   <div class="card w-100 h-100 border-top border-info">
                     <div class="card-body">
-                      <span class="text-info">Productos:</span>
-                      <template
-                        v-for="item in obtenerDatos().productos"
-                        :key="item"
-                      >
+                      <span class="text-info"
+                        >Productos: <i class="fas fa-list"></i>
+                      </span>
+                      <template v-for="item in productos()" :key="item">
                         <p>
-                          <i class="fas fa-check-circle"></i>
-                          {{ item[0].titulo }} - {{ item[0].cantidad }}x${{
-                            item[0].precio
-                          }}
+                          <i class="fas fa-check"></i> {{ item.titulo }}
+                          <span class="float-right"
+                            >{{ item.cantidad }} x ${{
+                              Intl.NumberFormat("de-DE").format(item.precio)
+                            }}</span
+                          >
                         </p>
                       </template>
                     </div>
@@ -71,7 +71,9 @@
                         <span>
                           Total a transferir:
                           <b class="text-success"
-                            >${{ obtenerDatos().total }}</b
+                            >${{
+                              Intl.NumberFormat("de-DE").format(total())
+                            }}</b
                           ></span
                         >
                       </h4>
@@ -108,8 +110,8 @@
                 <div class="col-md-12 p-3">
                   <form
                     method="POST"
-                    @submit.prevent="enviarFormulario"
                     enctype="multipart/form-data"
+                    @submit.prevent="enviarTransferencia"
                   >
                     <div class="form-group">
                       <label for="#adjuntar">Adjuntar Comprobante</label>
@@ -161,12 +163,21 @@ export default {
       const archivo = new FormData();
       archivo.append("archivo", this.file);
 
+      // await axios
+      //   .post("https://neorelax.com.ar/upload.php", archivo, {
+      //     header: { "Content-Type": "multipart/form-data" },
+      //   })
+      //   .then((response) => {
+      //     console.log(response);
+      //     localStorage.setItem("Archivo", this.nombre);
+      //   });
+
       await axios
-        .post("https://neorelax.com.ar/upload.php", archivo, {
+        .post("http://localhost/neorelax/upload.php", archivo, {
           header: { "Content-Type": "multipart/form-data" },
         })
         .then((response) => {
-          console.log(response);
+        
           localStorage.setItem("Archivo", this.nombre);
         });
     },
@@ -176,58 +187,79 @@ export default {
     console.log(this.collection_id);
   },
   setup() {
-    const toast = useToast();
-    let router = useRouter();
+     const toast = useToast();
+     const router = useRouter();
+    //Numero operacion
+    const operacion = () => {
+      const numero_aleatorio = JSON.parse(localStorage.getItem("Operacion"));
 
-    //OBTENER DATOS
-    const obtenerDatos = () => {
-      var info = localStorage.getItem("Transferencia");
-
-      return JSON.parse(info);
+      return numero_aleatorio;
     };
 
-    //ENVIAR FORMULARIO
-    const enviarFormulario = async () => {
-      var archivo = localStorage.getItem("Archivo");
+    //Datos del cliente
+    const datos = () => {
+      const cliente = JSON.parse(localStorage.getItem("Datos"));
 
-      var form = {
-        cliente: obtenerDatos().cliente,
-        envio: obtenerDatos().envio,
-        productos: obtenerDatos().productos,
-        total: obtenerDatos().total,
-        operacion: obtenerDatos().operacion,
-        metodo: obtenerDatos().metodo,
+      return cliente;
+    };
+
+    //Datos del envio
+    const envio = () => {
+      const datos = JSON.parse(localStorage.getItem("Envio"));
+
+      return datos;
+    };
+
+    // Datos de los items
+    const productos = () => {
+      const items = JSON.parse(localStorage.getItem("Items"));
+
+      return items;
+    };
+
+    //Total
+    const total = () => {
+      const tot = JSON.parse(localStorage.getItem("Total"));
+
+      return tot;
+    };
+
+    const enviarTransferencia = async () => {
+      const archivo = localStorage.getItem("Archivo");
+
+      const dato = {
+        cliente: datos(),
+        envio: envio(),
+        productos: productos(),
+        total: total(),
+        operacion: operacion(),
+        metodo: "Transferencia",
         archivo: archivo,
       };
 
       if (archivo) {
-        try {
-          const response = await transferenciaApi(form);
-
-          toast.success("¡Has realizado la transferencia exitosamente!", {
-            timeout: 3000,
+        const resp = await transferenciaApi(dato);
+         toast.success("¡Felicitaciones tu compra fue exitosa!", {
+            timeout: 4000,
             position: "top-center",
           });
 
-          localStorage.removeItem("Transferencia");
-          localStorage.removeItem("Archivo");
-          localStorage.removeItem("productos");
-
-          router.push("/");
-        } catch (error) {
-          console.log(error);
-        }
+          router.push('/')
       } else {
-        toast.warning("¡Debes adjuntar el comprobante!", {
-          timeout: 3000,
-          position: "top-center",
-        });
+         toast.warning("¡Adjunte el comprobante para finalizar!", {
+            timeout: 4000,
+            position: "top-center",
+          });
       }
     };
 
     return {
-      obtenerDatos,
-      enviarFormulario,
+      operacion,
+      datos,
+      envio,
+      productos,
+      total,
+      enviarTransferencia,
     };
   },
 };
