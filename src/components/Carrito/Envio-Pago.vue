@@ -71,13 +71,19 @@
               <li class="lista">
                 <p class="p-2">
                   <i class="fas fa-truck"></i> Envío
-                  <span class="float-right">${{ Intl.NumberFormat("de-DE").format(costoEnvio()) }} </span>
+                  <span class="float-right"
+                    >${{ Intl.NumberFormat("de-DE").format(costoEnvio()) }}
+                  </span>
                 </p>
               </li>
               <li class="lista" v-if="metodo == 'transferencia'">
                 <p class="p-2">
                   <i class="fas fa-percent"></i> Descuento
-                  <span class="float-right">-${{ Intl.NumberFormat("de-DE").format(descuento()) }}</span>
+                  <span class="float-right"
+                    >-${{
+                      Intl.NumberFormat("de-DE").format(descuento())
+                    }}</span
+                  >
                 </p>
               </li>
               <li class="lista border-top border-bottom">
@@ -135,6 +141,11 @@
                   Realizar transferencia
                 </button>
               </div>
+              <div class="form-group" v-if="metodo == 'mercado_pago'">
+                <button class="btn btn-dark btn-block" @click="mercadoPago()">
+                  Pagar con Mercado Pago
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -146,8 +157,11 @@
 <script>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import axios from "axios";
 import { useToast } from "vue-toastification";
 import useEnvio from "../../composables/useEnvio";
+import useEnvioAndreani from "../../composables/useEnvio-andreani";
+// import useMercadoPago from "../../composables/useMercadoPago";
 
 export default {
   name: "Envio-pago",
@@ -155,7 +169,7 @@ export default {
     const formEnvio = ref({});
     const metodo = ref();
     const router = useRouter();
-     const toast = useToast();
+    const toast = useToast();
 
     //OBTENER PRODUCTOS
     const productos = () => {
@@ -166,7 +180,7 @@ export default {
 
     //OBTENER SUBTOTAL
     const subTotal = () => {
-      var total = localStorage.getItem("Subtotal");
+      var total = localStorage.getItem("XStl");
 
       return total;
     };
@@ -174,13 +188,18 @@ export default {
     //OBTENER ENVIO CRUZ DEL SUR
     const { costoEnvioDomicilio, costoEnvioSucursal } = useEnvio();
 
+    //OBTENER ENVIO ANDREANI
+    const { envio } = useEnvioAndreani();
+
     //Ver COSTO DE ENVIO
     const costoEnvio = () => {
       if (formEnvio.value.transporte === "Andreani") {
         if (formEnvio.value.entrega === "domicilio") {
-          var costo = 300;
+          var costo = parseInt(envio.value) + 1;
+        } else if (formEnvio.value.entrega === "sucursal") {
+          var costo = parseInt(envio.value) + 1;
         } else {
-          var costo = 100;
+          var costo = 0;
         }
       } else if (formEnvio.value.transporte === "Cruz del Sur") {
         if (formEnvio.value.entrega === "domicilio") {
@@ -197,40 +216,34 @@ export default {
       return costo;
     };
 
-
     //Datos del transporte
     const transporte = () => {
-     
       const datosTransporte = {
         transporte: formEnvio.value.transporte,
         tipo_envio: formEnvio.value.entrega,
-        costo: costoEnvio()
-      }
+        costo: costoEnvio(),
+      };
 
       return datosTransporte;
-    }
+    };
 
-    //Descuento 
-     const descuento = () => {
-       const sumaTotal = parseInt(subTotal()) + costoEnvio()
-       const desc = parseInt((sumaTotal * 20) / 100)
+    //Descuento
+    const descuento = () => {
+      const sumaTotal = parseInt(subTotal()) + costoEnvio();
+      const desc = parseInt((sumaTotal * 20) / 100);
 
-       return desc
-     }
+      return desc;
+    };
 
     //OBTENER TOTAL
     const total = () => {
-
-      var total = localStorage.getItem("Subtotal");
+      var total = localStorage.getItem("XStl");
       var costo = costoEnvio();
-      var desc = descuento()
+      var desc = descuento();
 
-      if(metodo.value == 'transferencia'){
-
-        var precio = (Number(total) + Number(costo)) - desc
-
-      }else{
-        
+      if (metodo.value == "transferencia") {
+        var precio = Number(total) + Number(costo) - desc;
+      } else {
         var precio = Number(total) + Number(costo);
       }
 
@@ -247,17 +260,52 @@ export default {
     //Transferencia
     const transf = () => {
       if (!formEnvio.value.entrega) {
-          toast.warning("¡Elige un tipo de envio!", {
-            timeout: 3000,
-            position: "top-center",
-          });
+        toast.warning("¡Elige un tipo de envio!", {
+          timeout: 3000,
+          position: "top-center",
+        });
       } else {
-        localStorage.setItem('Total', total())
-        localStorage.setItem('Envio', JSON.stringify(transporte()))
-         localStorage.setItem('Operacion', operacion())
+        localStorage.setItem("1Txl", total());
+        localStorage.setItem("Evo", JSON.stringify(transporte()));
+        localStorage.setItem("Op", operacion());
 
         router.push("/finalizar-transferencia");
       }
+    };
+
+    const mercadoPago = async () => {
+      const datos = {
+        items: [
+          {
+            title: "Neorelax",
+            description: "Productos",
+            picture_url: "http://www.myapp.com/myimage.jpg",
+            category_id: "123456",
+            quantity: 1,
+            currency_id: "$",
+            unit_price: total(),
+          },
+        ],
+        back_urls: {
+          success: "http://localhost:8080/",
+        },
+        auto_return: "approved",
+        total_amount: total(),
+      };
+
+      axios
+        .post(
+          `https://api.mercadopago.com/checkout/preferences?public_key=TEST-2120202c-03df-4737-a266-adde38acab23&access_token=TEST-5415771435113542-051218-47ba16d5357e371d6d1aa827caacac9a-387850437`,
+          datos
+        )
+        .then((response) => {
+          localStorage.setItem("1Txl", total());
+          localStorage.setItem("Evo", JSON.stringify(transporte()));
+          localStorage.setItem("Op", operacion());
+
+          const ver = response.data.sandbox_init_point;
+          window.location = `${ver}`;
+        });
     };
 
     return {
@@ -268,7 +316,8 @@ export default {
       total,
       metodo,
       transf,
-      descuento
+      descuento,
+      mercadoPago,
     };
   },
 };

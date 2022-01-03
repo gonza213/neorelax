@@ -191,7 +191,7 @@ export default {
      const router = useRouter();
     //Numero operacion
     const operacion = () => {
-      const numero_aleatorio = JSON.parse(localStorage.getItem("Operacion"));
+      const numero_aleatorio = JSON.parse(localStorage.getItem("Op"));
 
       return numero_aleatorio;
     };
@@ -205,7 +205,7 @@ export default {
 
     //Datos del envio
     const envio = () => {
-      const datos = JSON.parse(localStorage.getItem("Envio"));
+      const datos = JSON.parse(localStorage.getItem("Evo"));
 
       return datos;
     };
@@ -219,7 +219,7 @@ export default {
 
     //Total
     const total = () => {
-      const tot = JSON.parse(localStorage.getItem("Total"));
+      const tot = JSON.parse(localStorage.getItem("1Txl"));
 
       return tot;
     };
@@ -239,7 +239,7 @@ export default {
 
       if (archivo) {
         const resp = await transferenciaApi(dato);
-         toast.success("¡Felicitaciones tu compra fue exitosa!", {
+         toast.success("¡Felicidades haz realizado tu compra con éxito!", {
             timeout: 4000,
             position: "top-center",
           });

@@ -41,6 +41,7 @@ const {data} = await axios.get(`${HOST}/NuevaCotXMed`, {
   const valor1 = data.Cotizaciones[1].Valor * cantidad
   const valor2 = data.Cotizaciones[0].Valor * cantidad
 
+
   costoEnvioDomicilio.value += valor1 
   costoEnvioSucursal.value += valor2 
     
