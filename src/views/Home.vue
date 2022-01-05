@@ -15,7 +15,7 @@ import Franja from "../components/Home/Franja";
 import Video from "../components/Home/Video";
 import Categorias from "../components/Home/Categorias";
 import Frase from "../components/Home/Frase";
-import { API_TEST } from "../utils/constants";
+import { API_URL } from "../utils/constants";
 import axios from "axios";
 
 export default {
@@ -58,7 +58,7 @@ export default {
       };
 
       axios
-        .post(`${API_TEST}/api/mercado`, datos)
+        .post(`${API_URL}/api/mercado`, datos)
         .then((response) => {
           console.log(response);
           this.$toast.success(

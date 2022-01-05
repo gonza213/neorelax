@@ -169,6 +169,9 @@
         </div>
       </div>
       <div class="col-md-8 p-3 mb-2 mx-auto">
+          <router-link to="/carrito" class="btn btn-info">
+            <i class="fas fa-arrow-left"></i> Volver 
+        </router-link>
         <button class="btn btn-info float-right">
           Continuar <i class="fas fa-arrow-right"></i>
         </button>
