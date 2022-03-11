@@ -163,23 +163,23 @@ export default {
       const archivo = new FormData();
       archivo.append("archivo", this.file);
 
-      // await axios
-      //   .post("https://neorelax.com.ar/upload.php", archivo, {
-      //     header: { "Content-Type": "multipart/form-data" },
-      //   })
-      //   .then((response) => {
-      //     console.log(response);
-      //     localStorage.setItem("Archivo", this.nombre);
-      //   });
-
       await axios
-        .post("http://localhost/neorelax/upload.php", archivo, {
+        .post("https://neorelax.com.ar/upload.php", archivo, {
           header: { "Content-Type": "multipart/form-data" },
         })
         .then((response) => {
-        
+          console.log(response);
           localStorage.setItem("Archivo", this.nombre);
         });
+
+      // await axios
+      //   .post("http://localhost/neorelax/upload.php", archivo, {
+      //     header: { "Content-Type": "multipart/form-data" },
+      //   })
+      //   .then((response) => {
+        
+      //     localStorage.setItem("Archivo", this.nombre);
+      //   });
     },
   },
   mounted() {

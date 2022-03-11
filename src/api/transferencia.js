@@ -1,8 +1,8 @@
-import { API_TEST } from '../utils/constants';
+import { API_URL } from '../utils/constants';
 
 export async function transferenciaApi(form) {
     try {
-        const url = `${API_TEST}/api/transferencia`;
+        const url = `${API_URL}/api/transferencia`;
         const params = {
             method: 'POST',
             headers: {
